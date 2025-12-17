@@ -1,1 +1,263 @@
-/* You can add global styles to this file, and also import other style files */
+.pm-mention-group {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 999px;
+  padding: 2px 6px;
+  background: rgba(60, 130, 255, 0.12);
+  border: 1px solid rgba(60, 130, 255, 0.22);
+}
+
+.pm-mention-group__avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pm-mention-group__avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  margin-left: -6px;
+}
+
+.pm-mention-group__avatar:first-child {
+  margin-left: 0;
+}
+
+.pm-mention-group__more {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.pm-mention-popup {
+  position: fixed;
+  z-index: 9999;
+  width: 260px;
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
+  padding: 10px;
+}
+
+.pm-mention-popup__header {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.pm-mention-popup__row {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.pm-mention-popup__row:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.pm-mention-popup__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pm-mention-popup__name {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pm-mention-popup__title {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.pm-mention-popup{
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  padding: 6px;
+  width: 280px;
+}
+.pm-mention-item{
+  display:flex;
+  gap:10px;
+  padding:8px;
+  border-radius:10px;
+  cursor:pointer;
+}
+.pm-mention-item:hover{ background:#f3f4f6; }
+.pm-mention-avatar{ width:28px; height:28px; border-radius:999px; }
+.pm-mention-name{ font-weight:600; font-size:13px; }
+.pm-mention-title{ font-size:12px; opacity:.7; }
+
+.pm-host {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 140px;
+}
+
+:host ::ng-deep .ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+:host ::ng-deep .kw-icon {
+  margin-left: 6px;
+  font-size: 0.95em;
+  vertical-align: middle;
+  opacity: 0.9;
+}
+
+:host ::ng-deep .kw-word.kw-mobile {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+:host ::ng-deep .kw-word.kw-bug {
+  text-decoration: underline;
+  text-decoration-style: wavy;
+}
+
+
+.pm-keyword{
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.pm-keyword{
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(0,0,0,.06);
+}
+
+.pm-keyword:hover{
+  background: rgba(0,0,0,.10);
+}
+
+.pm-keyword:active{
+  transform: translateY(1px);
+}
+
+.pm-keyword--task{
+  color: #0b5cff;
+  border-color: rgba(11,92,255,.35);
+  background: rgba(11,92,255,.10);
+}
+
+.pm-keyword--meeting{
+  color: #8a2be2;
+  border-color: rgba(138,43,226,.35);
+  background: rgba(138,43,226,.10);
+}
+
+.pm-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  user-select: none;
+}
+
+.pm-mention__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+}
+
+.pm-mention__label {
+  font-weight: 600;
+}
+
+/* ✅ cuando detectamos menciones seguidas (run>=2) */
+.pm-mention.pm-mention--stacked {
+  padding: 6px;
+  gap: 0;
+}
+
+/* ocultar label en modo stacked */
+.pm-mention.pm-mention--stacked .pm-mention__label {
+  display: none;
+}
+
+/* overlap visual entre menciones consecutivas */
+.pm-mention.pm-mention--stacked + .pm-mention.pm-mention--stacked {
+  margin-left: -10px;
+}
+
+/* (opcional) elevar hover */
+.pm-mention:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.pm-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.pm-mention__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.pm-mention__label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ✅ modo stack: solo avatar */
+.pm-mention--compact {
+  padding: 4px;
+  gap: 0;
+}
+.pm-mention--compact .pm-mention__label {
+  display: none;
+}
+
+
+.pm-mention--compact .pm-mention__label { display: none; }
+
+// overlap (stack)
+.pm-mention--compact { padding: 2px 6px; }
+.pm-mention--compact.pm-mention--middle,
+.pm-mention--compact.pm-mention--last {
+  margin-left: -10px;       // superpone
+}
+.pm-mention__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #fff;   // borde para que se vea el stack
+}
+
