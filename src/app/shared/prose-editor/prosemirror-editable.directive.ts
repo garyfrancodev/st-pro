@@ -44,6 +44,9 @@ import {mentionGroupPlugin} from './mention-group.plugin';
 import {mentionStackPlugin} from './mention-stack.plugin';
 import {mentionTypeaheadPlugin} from './mention-typeahead.plugin';
 import {mentionGroupNodeName, mentionGroupNodeSpec} from './mention_group.node';
+import {noticeInlineSuggestionsPlugin} from './notice-inline-suggestions.plugin';
+import {noticeSuggestionsPlugin} from './notice-suggestions.plugin';
+import {noticeNodeSpec} from './notice.node';
 
 /** ✅ MarkSpec para “task/meeting” (o cualquier keyword clickeable) */
 export const keywordMarkSpec: MarkSpec = {
@@ -173,8 +176,10 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
             // Volver a Angular para emitir evento seguro
             this.zone.run(() => this.pmKeywordClick.emit(kw));
           }),
+          noticeInlineSuggestionsPlugin(),
           importantBoxPlugin({ trigger: 'important!' }),
           bubbleReindexPlugin(schema),
+          //noticeSuggestionsPlugin(),
         ],
       });
 
@@ -213,15 +218,21 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
   // Schema
   // -------------------------
   private buildSchema(): Schema {
-    const nodes = addListNodes(basicSchema.spec.nodes, "paragraph block*", "block")
+    // 1) base + listas
+    let nodes = addListNodes(basicSchema.spec.nodes, "paragraph block*", "block");
+
+    // 2) Inserta NOTICE aquí (temprano)
+    nodes = nodes.addToEnd("notice", noticeNodeSpec);
+
+    // 3) Luego tus nodos custom al final
+    nodes = nodes
       .addToEnd(mentionGroupNodeName, mentionGroupNodeSpec)
       .addToEnd("link_card", linkCardNodeSpec)
       .addToEnd("important_box", importantBoxNodeSpec)
       .addToEnd("bubble_list", bubbleListSpec)
       .addToEnd("bubble_item", bubbleItemSpec);
 
-    const marks = basicSchema.spec.marks
-      .addToEnd("keyword", keywordMarkSpec);
+    const marks = basicSchema.spec.marks.addToEnd("keyword", keywordMarkSpec);
 
     return new Schema({ nodes, marks });
   }

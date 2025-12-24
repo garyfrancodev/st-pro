@@ -1,7 +1,6 @@
 // bubble-item.nodeview.ts
 import { Node as PMNode } from 'prosemirror-model';
 import { EditorView, NodeView } from 'prosemirror-view';
-import { setBubbleVariant } from './bubble.commands';
 
 type GetPos = () => number | undefined;
 
@@ -9,8 +8,8 @@ export class BubbleItemNodeView implements NodeView {
   dom: HTMLElement;
   contentDOM: HTMLElement;
 
-  private leftBtn: HTMLButtonElement;
-  private rightBtn: HTMLButtonElement;
+  private marker: HTMLElement;
+  private controls: HTMLElement;
 
   constructor(
     private node: PMNode,
@@ -19,75 +18,68 @@ export class BubbleItemNodeView implements NodeView {
     private variantCount: number
   ) {
     this.dom = document.createElement('div');
-    this.dom.className = this.getClass(node);
-    this.dom.setAttribute('data-bubble-item', 'true');
+    this.dom.className = 'pm-bubble';
 
-    const marker = document.createElement('div');
-    marker.className = 'pm-bubble-marker';
-    marker.textContent = String((node.attrs as any)['index'] ?? 1);
+    const wrap = document.createElement('div');
+    wrap.className = 'pm-bubble__wrap';
 
-    const controls = document.createElement('div');
-    controls.className = 'pm-bubble-controls';
+    // 🔢 marker (NO editable)
+    this.marker = document.createElement('div');
+    this.marker.className = 'pm-bubble__marker';
 
-    this.leftBtn = document.createElement('button');
-    this.leftBtn.type = 'button';
-    this.leftBtn.className = 'pm-bubble-btn pm-bubble-btn-left';
-    this.leftBtn.textContent = '◀';
-
-    this.rightBtn = document.createElement('button');
-    this.rightBtn.type = 'button';
-    this.rightBtn.className = 'pm-bubble-btn pm-bubble-btn-right';
-    this.rightBtn.textContent = '▶';
-
-    controls.append(this.leftBtn, this.rightBtn);
-
+    // ✏️ texto editable
     this.contentDOM = document.createElement('div');
-    this.contentDOM.className = 'pm-bubble-content';
+    this.contentDOM.className = 'pm-bubble__content';
 
-    this.dom.append(marker, controls, this.contentDOM);
+    // ◀ ▶ controles
+    this.controls = document.createElement('div');
+    this.controls.className = 'pm-bubble__controls';
 
-    this.leftBtn.addEventListener('mousedown', (e) => e.preventDefault());
-    this.rightBtn.addEventListener('mousedown', (e) => e.preventDefault());
+    const prev = document.createElement('button');
+    prev.textContent = '◀';
+    const next = document.createElement('button');
+    next.textContent = '▶';
 
-    this.leftBtn.addEventListener('click', () => this.shiftVariant(-1));
-    this.rightBtn.addEventListener('click', () => this.shiftVariant(+1));
+    prev.onmousedown = next.onmousedown = (e) => e.preventDefault();
+    prev.onclick = () => this.shiftVariant(-1);
+    next.onclick = () => this.shiftVariant(1);
+
+    this.controls.append(prev, next);
+
+    wrap.append(this.marker, this.contentDOM, this.controls);
+    this.dom.append(wrap);
+
+    this.sync();
   }
 
-  private getVariant(node: PMNode): number {
-    return Number((node.attrs as any)['variant'] ?? 0);
-  }
+  private sync() {
+    const a = this.node.attrs as any;
+    this.marker.textContent = `${a.index}.`;
 
-  private getIndex(node: PMNode): number {
-    return Number((node.attrs as any)['index'] ?? 1);
-  }
-
-  private getClass(node: PMNode) {
-    const v = this.getVariant(node);
-    return `pm-bubble-item pm-bubble-variant-${v}`;
+    for (let i = 0; i < this.variantCount; i++) {
+      this.dom.classList.remove(`pm-bubble--v${i}`);
+    }
+    this.dom.classList.add(`pm-bubble--v${a.variant}`);
   }
 
   private shiftVariant(delta: number) {
     const pos = this.getPos();
-    if (pos == null) return; // <-- importante
+    if (typeof pos !== 'number') return;
 
-    const current = this.getVariant(this.node);
-    const next = (current + delta + this.variantCount) % this.variantCount;
+    const a = this.node.attrs as any;
+    const next = (a.variant + delta + this.variantCount) % this.variantCount;
 
-    const tr = this.view.state.tr;
-    setBubbleVariant(tr, pos, next);
-    this.view.dispatch(tr);
-    this.view.focus();
+    this.view.dispatch(
+      this.view.state.tr.setNodeMarkup(pos, undefined, {
+        ...a,
+        variant: next,
+      })
+    );
   }
 
   update(node: PMNode) {
-    if (node.type !== this.node.type) return false;
     this.node = node;
-
-    this.dom.className = this.getClass(node);
-
-    const marker = this.dom.querySelector('.pm-bubble-marker') as HTMLElement | null;
-    if (marker) marker.textContent = String(this.getIndex(node));
-
+    this.sync();
     return true;
   }
 }

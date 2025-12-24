@@ -1,57 +1,45 @@
 // bubble.reindex.plugin.ts
-import { Plugin, PluginKey } from 'prosemirror-state';
-
-export const bubbleReindexKey = new PluginKey('bubbleReindex');
+import { Plugin } from 'prosemirror-state';
 
 export function bubbleReindexPlugin(schema: any) {
   const listType = schema.nodes['bubble_list'];
   const itemType = schema.nodes['bubble_item'];
-  if (!listType || !itemType) {
-    return new Plugin({ key: bubbleReindexKey });
-  }
 
   return new Plugin({
-    key: bubbleReindexKey,
-
-    appendTransaction(transactions, oldState, newState) {
-      // solo si cambió el doc
-      if (!transactions.some(t => t.docChanged)) return null;
-
-      // evita loops
-      if (transactions.some(t => t.getMeta(bubbleReindexKey))) return null;
-
-      let tr = newState.tr;
+    appendTransaction(_trs, _oldState, state) {
+      let tr = state.tr;
       let changed = false;
 
-      // Reindex por cada bubble_list
-      newState.doc.descendants((node: any, pos: number) => {
+      state.doc.descendants((node, pos) => {
         if (node.type !== listType) return true;
 
-        let idx = 1;
+        // node = bubble_list
+        let offset = 0;
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          const childPos = pos + 1 + offset; // ✅ posición real del hijo en el doc
 
-        node.forEach((child: any, offset: number) => {
-          if (child.type !== itemType) return;
+          if (child.type === itemType) {
+            const attrs = child.attrs as Record<string, unknown>;
+            const current = Number(attrs['index'] ?? 0);
+            const expected = i + 1;
 
-          const childPos = pos + 1 + offset; // posición absoluta del bubble_item
-          const attrs = child.attrs as Record<string, any>;
-          const current = Number(attrs['index'] ?? 1);
-
-          if (current !== idx) {
-            const variant = Number(attrs['variant'] ?? 0);
-            tr = tr.setNodeMarkup(childPos, undefined, { ...attrs, index: idx, variant });
-            changed = true;
+            if (current !== expected) {
+              tr = tr.setNodeMarkup(childPos, undefined, {
+                ...attrs,
+                index: expected,
+              });
+              changed = true;
+            }
           }
 
-          idx++;
-        });
+          offset += child.nodeSize;
+        }
 
-        return false;
+        return false; // ya procesamos hijos manualmente
       });
 
-      if (!changed) return null;
-
-      tr.setMeta(bubbleReindexKey, true);
-      return tr;
+      return changed ? tr : null;
     },
   });
 }

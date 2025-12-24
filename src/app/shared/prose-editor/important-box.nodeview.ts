@@ -1,81 +1,74 @@
-// important-box.nodeview.ts
 import { Node as PMNode } from 'prosemirror-model';
 import { EditorView, NodeView } from 'prosemirror-view';
 
 type GetPos = () => number | undefined;
 
-export class ImportantBoxNodeView implements NodeView {
+export class ImportantTemplateNodeView implements NodeView {
   dom: HTMLElement;
   contentDOM: HTMLElement;
-
-  private leftBtn: HTMLButtonElement;
-  private rightBtn: HTMLButtonElement;
 
   constructor(
     private node: PMNode,
     private view: EditorView,
     private getPos: GetPos,
-    private variantCount: number,
-    private variantClass?: (v: number) => string
+    templateHtml: string
   ) {
-    this.dom = document.createElement('div');
-    this.dom.className = this.computeClass(node);
-    this.dom.setAttribute('data-pm-important', 'true');
+    // ✅ root inline
+    this.dom = document.createElement('span');
+    this.dom.className = 'pm-important-host';
+    this.dom.style.display = 'inline-block';
+    this.dom.style.maxWidth = '100%';
+    this.dom.style.verticalAlign = 'top';
 
-    // Controles hover
-    const controls = document.createElement('div');
-    controls.className = 'pm-important-controls';
+    // parse template
+    const tpl = document.createElement('template');
+    tpl.innerHTML = templateHtml.trim();
 
-    this.leftBtn = document.createElement('button');
-    this.leftBtn.type = 'button';
-    this.leftBtn.className = 'pm-important-btn pm-important-btn-left';
-    this.leftBtn.textContent = '◀';
+    const root = tpl.content.firstElementChild as HTMLElement | null;
+    if (!root) throw new Error('Important template must have a root element');
 
-    this.rightBtn = document.createElement('button');
-    this.rightBtn.type = 'button';
-    this.rightBtn.className = 'pm-important-btn pm-important-btn-right';
-    this.rightBtn.textContent = '▶';
+    // busca el slot
+    const slot = root.querySelector('[data-slot="content"]') as HTMLElement | null;
+    if (!slot) throw new Error('Template missing [data-slot="content"]');
 
-    controls.append(this.leftBtn, this.rightBtn);
+    // ✅ contentDOM: el “punto de escritura”
+    // usa span inline-block para que el cursor tenga hitbox
+    this.contentDOM = document.createElement('span');
+    this.contentDOM.className = 'pm-important-contentdom';
+    this.contentDOM.setAttribute('data-pm-contentdom', 'true');
 
-    // Slot editable
-    this.contentDOM = document.createElement('div');
-    this.contentDOM.className = 'pm-important-content';
+    // reemplaza el slot por contentDOM
+    slot.replaceWith(this.contentDOM);
 
-    this.dom.append(controls, this.contentDOM);
+    // ⚠️ MUY importante: mete todo dentro de un contenedor inline
+    // (evita que <article> block afecte la selección)
+    const inlineWrap = document.createElement('span');
+    inlineWrap.className = 'pm-important-inlinewrap';
+    inlineWrap.appendChild(root);
 
-    // Evitar que los botones roben selección
-    this.leftBtn.addEventListener('mousedown', (e) => e.preventDefault());
-    this.rightBtn.addEventListener('mousedown', (e) => e.preventDefault());
+    this.dom.appendChild(inlineWrap);
 
-    this.leftBtn.addEventListener('click', () => this.shiftVariant(-1));
-    this.rightBtn.addEventListener('click', () => this.shiftVariant(+1));
+    // ✅ “hacer clic en cualquier parte” debe llevar el cursor adentro
+    this.dom.addEventListener('mousedown', (e) => {
+      // si el click NO fue sobre el área editable, mueve el cursor al final del contenido
+      if (!this.contentDOM.contains(e.target as Node)) {
+        e.preventDefault();
+        this.focusInside();
+      }
+    });
   }
 
-  private getVariant(n: PMNode): number {
-    const a = n.attrs as Record<string, unknown>;
-    return Number(a['variant'] ?? 0);
-  }
-
-  private computeClass(n: PMNode): string {
-    const a = n.attrs as Record<string, unknown>;
-    const templateId = String(a['templateId'] ?? 'important');
-    const v = this.getVariant(n);
-    const extra = this.variantClass ? this.variantClass(v) : `important-v${v}`;
-    return `pm-important-box pm-important-${templateId} ${extra}`;
-  }
-
-  private shiftVariant(delta: number) {
+  private focusInside() {
     const pos = this.getPos();
-    if (pos == null) return;
+    if (typeof pos !== 'number') return;
 
-    const current = this.getVariant(this.node);
-    const next = (current + delta + this.variantCount) % this.variantCount;
+    const nodeSize = this.node.nodeSize;
+    const insideEnd = pos + nodeSize - 1; // final dentro del nodo
 
-    const tr = this.view.state.tr;
-    const attrs = this.node.attrs as Record<string, unknown>;
-    tr.setNodeMarkup(pos, undefined, { ...attrs, variant: next });
-
+    const { TextSelection } = require('prosemirror-state');
+    const tr = this.view.state.tr.setSelection(
+      TextSelection.near(this.view.state.doc.resolve(insideEnd), -1)
+    );
     this.view.dispatch(tr);
     this.view.focus();
   }
@@ -83,7 +76,6 @@ export class ImportantBoxNodeView implements NodeView {
   update(node: PMNode) {
     if (node.type !== this.node.type) return false;
     this.node = node;
-    this.dom.className = this.computeClass(node);
     return true;
   }
 }

@@ -1,5 +1,6 @@
 import { InputRule, inputRules } from 'prosemirror-inputrules';
 import { ImportantRegistry } from './important.registry';
+import { TextSelection } from 'prosemirror-state';
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -19,13 +20,18 @@ export function importantInputRules(
     const trigger = match[1] as string;
     const info = registry.matchTrigger(trigger);
 
-    // 🔥 TEXTO NO VACÍO
     const node = type.create(
       { templateId: info?.templateId ?? 'important', variant: 0 },
-      state.schema.text(' ')
+      state.schema.text(' ') // contenido mínimo
     );
 
-    return state.tr.replaceRangeWith(start, end, node);
+    const tr = state.tr.replaceRangeWith(start, end, node);
+
+    // ✅ mover foco dentro del template
+    const posInside = start + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(posInside), 1));
+
+    return tr;
   });
 
   return inputRules({ rules: [rule] });
