@@ -17,6 +17,20 @@ import { addListNodes } from 'prosemirror-schema-list';
 import { history } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import { baseKeymap } from 'prosemirror-commands';
+import {bubbleInputRules} from './bubble.inputrules';
+import {bubbleKeymap} from './bubble.keymap';
+import {bubbleNodeViews} from './bubble.nodeviews';
+import {bubbleReindexPlugin} from './bubble.reindex.plugin';
+import {bubbleItemSpec, bubbleListSpec} from './bubble.schema';
+import {debugImportantInputRules} from './debug-important.inputrules';
+import {importantBoxNodeSpec} from './important-box.node';
+import {importantBoxPlugin} from './important-box.plugin';
+import {importantTriggerPlugin} from './important-trigger.plugin';
+import {importantInputRules} from './important.inputrules';
+import {importantKeymap} from './important.keymap';
+import {importantNodeViews} from './important.nodeviews';
+import {ImportantRegistry} from './important.registry';
+import {IMPORTANT_HTML_BASE} from './important.templates';
 
 // ✅ Tus plugins (ajusta rutas según tu proyecto)
 import { keywordMarkingPlugin } from './keywordPlugin';
@@ -102,19 +116,32 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
         { id: "u3", name: "Carla Pinto", title: "Product", avatarUrl: "https://i.pravatar.cc/100?img=32" },
       ];
 
+      const importantRegistry = new ImportantRegistry();
+      importantRegistry.register({
+        id: 'important',
+        triggers: ['important!'],
+        html: IMPORTANT_HTML_BASE,
+        variantCount: 3,
+      });
+
       const schema = this.buildSchema();
       const state = EditorState.create({
         schema,
         plugins: [
           history(),
+          //debugImportantInputRules(schema),
+          importantInputRules(schema, importantRegistry),
           keymap(baseKeymap),
+          bubbleInputRules(schema),
+          bubbleKeymap(schema),
 
+          importantInputRules(schema, importantRegistry),
+          importantKeymap(schema),
+          keymap(baseKeymap),
+          //
           mentionGroupNodeViewPlugin("mention_group"),
-
           mentionGroupPlugin(),
-
           mentionStackPlugin("mention_group"),
-
           mentionTypeaheadPlugin({
             users: fakeUsers,
             onPick: (view, pickedUsers, range) => {
@@ -124,15 +151,14 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
               );
             }
           }),
-
           keymap({
             "Mod-m": (state, dispatch) => insertMentionGroup(fakeUsers)(state, dispatch),
           }),
-
-          // Icons (mobile/bug) confirmados por espacio/enter/puntuación
+          //
+          // // Icons (mobile/bug) confirmados por espacio/enter/puntuación
           this.keywordIconsPlugin(),
-
-          // Marking (task/meeting) confirmado por espacio/enter/puntuación
+          //
+          // // Marking (task/meeting) confirmado por espacio/enter/puntuación
           keywordMarkingPlugin(),
           linkPreviewPastePlugin({
             fetchPreview: (url) => fetch("/api/link-preview", {
@@ -141,12 +167,14 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
               body: JSON.stringify({ url }),
             }).then(r => r.json())
           }),
-
-          // Click en mark (task/meeting)
+          //
+          // // Click en mark (task/meeting)
           keywordClickPlugin((kw) => {
             // Volver a Angular para emitir evento seguro
             this.zone.run(() => this.pmKeywordClick.emit(kw));
           }),
+          importantBoxPlugin({ trigger: 'important!' }),
+          bubbleReindexPlugin(schema),
         ],
       });
 
@@ -159,6 +187,8 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
           autocomplete: 'on',
         },
         nodeViews: {
+          ...importantNodeViews(importantRegistry),
+          ...bubbleNodeViews(3),
           link_card: (node, view) => new LinkCardView(node, view),
         },
       });
@@ -184,8 +214,11 @@ export class ProseMirrorEditableDirective implements OnInit, OnDestroy {
   // -------------------------
   private buildSchema(): Schema {
     const nodes = addListNodes(basicSchema.spec.nodes, "paragraph block*", "block")
-      .addToEnd(mentionGroupNodeName, mentionGroupNodeSpec)  // ✅ AQUÍ
-      .addToEnd("link_card", linkCardNodeSpec);
+      .addToEnd(mentionGroupNodeName, mentionGroupNodeSpec)
+      .addToEnd("link_card", linkCardNodeSpec)
+      .addToEnd("important_box", importantBoxNodeSpec)
+      .addToEnd("bubble_list", bubbleListSpec)
+      .addToEnd("bubble_item", bubbleItemSpec);
 
     const marks = basicSchema.spec.marks
       .addToEnd("keyword", keywordMarkSpec);

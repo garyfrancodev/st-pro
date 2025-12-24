@@ -261,3 +261,120 @@
   border: 2px solid #fff;   // borde para que se vea el stack
 }
 
+.pm-important-box{
+  display:inline-block;     /* evita full width */
+  width:fit-content;        /* se adapta al contenido */
+  min-width:220px;
+  max-width:100%;
+  /* el resto igual */
+  background:#e53935;
+  color:#fff;
+  padding:10px 12px;
+  border-radius:10px;
+}
+.pm-important-box p{
+  margin:0;
+}
+
+.pm-bubble-item{
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 6px 0;
+}
+
+.pm-bubble-marker{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.pm-bubble-content{
+  padding: 10px 12px;
+  border-radius: 14px;
+  max-width: 100%;
+}
+
+/* Controles ocultos hasta hover */
+.pm-bubble-controls{
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease;
+}
+.pm-bubble-item:hover .pm-bubble-controls{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pm-bubble-btn{
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+/* 3 variantes (ejemplos) */
+.pm-bubble-variant-0 .pm-bubble-content{ background: #f1f3f5; }
+.pm-bubble-variant-0 .pm-bubble-marker{ background:#e9ecef; }
+
+.pm-bubble-variant-1 .pm-bubble-content{ background: #e53935; color:#fff; }
+.pm-bubble-variant-1 .pm-bubble-marker{ background:#e53935; color:#fff; }
+
+.pm-bubble-variant-2 .pm-bubble-content{ background: #1e88e5; color:#fff; }
+.pm-bubble-variant-2 .pm-bubble-marker{ background:#1e88e5; color:#fff; }
+
+
+.pm-important-box{
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.pm-important-content p{ margin:0; }
+
+/* Controles */
+.pm-important-controls{
+  position:absolute;
+  right:8px;
+  top:6px;
+  display:flex;
+  gap:6px;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .12s ease;
+}
+.pm-important-box:hover .pm-important-controls{
+  opacity:1;
+  pointer-events:auto;
+}
+.pm-important-btn{
+  border:0;
+  border-radius:8px;
+  padding:4px 6px;
+  cursor:pointer;
+}
+
+/* Variantes ejemplo */
+.important-v0{ background:#e53935; color:#fff; }
+.important-v1{ background:#ffb300; color:#111; }
+.important-v2{ background:#1e88e5; color:#fff; }
+
+
+/* Aplica al root del template */
+.important-v0 { filter: none; }
+.important-v1 { filter: hue-rotate(40deg) saturate(1.2); }
+.important-v2 { filter: hue-rotate(180deg) saturate(1.2); }
+
+
